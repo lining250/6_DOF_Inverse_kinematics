@@ -31,7 +31,6 @@ void nsleep(long ms)
     long us;
     us = 1000*ms;
     struct timespec wait;
-    //printf("Will sleep for is %ld\n", diff); //This will take extra ~70 microseconds
 
     wait.tv_sec = us / (1000 * 1000);
     wait.tv_nsec = (us % (1000 * 1000)) * 1000;
@@ -42,7 +41,7 @@ void nsleep(long ms)
 int main()
 {
     int delay=80;
-    //inverseKinematics(-10,30,15,r,angles);
+
     fd = serialport_init("/dev/ttyUSB0", 9600);
     sleep(2);
     inverseKinematics(10,30,10,r,angles); /* dumps the results in angles */

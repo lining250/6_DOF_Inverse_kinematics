@@ -132,17 +132,6 @@ void inverseKinematics(long double x,long double y,long double z,long double t[3
   file = fopen(name,"wb");
 
 
-//  for(i1=1;i1<7;i1++){
-//    printf("q%d=%lf \n",i1,angles[i1]);
-//    fprintf(file,"q%d=%lf \n",i1,angles[i1]);
-//  }
-// fclose(file);
-//  printf("--------------------- \n");
-
-//  for(i1=1;i1<7;i1++){
-//    printf("angles[%d]=%lf \n",i1,radtodeg*angles[i1]);
-//  }
-//    printf("--------------------- \n");
   if (angles[4] > pi/2){
     angles[4] =   angles[4] - pi;
     angles[5] = -(pi/2)- angles[5];
@@ -158,7 +147,5 @@ void inverseKinematics(long double x,long double y,long double z,long double t[3
   angles[4] = (angles[4] + pi/2);
   angles[5] = -angles[5];
   angles[6] = (pi/2)-angles[6];
-//  for(i1=1;i1<7;i1++){
-//    printf("angles[%d]=%lf \n",i1,radtodeg*angles[i1]);
-//  }
+
 }

@@ -1,0 +1,42 @@
+# depslib dependency file v1.0
+1479070547 source:/home/hank/Desktop/6 DOF IK/6 DOF IK/arduino-serial-lib.c
+	"arduino-serial-lib.h"
+	<stdio.h>
+	<unistd.h>
+	<fcntl.h>
+	<errno.h>
+	<termios.h>
+	<string.h>
+	<sys/ioctl.h>
+
+1479242181 /home/hank/Desktop/6 DOF IK/6 DOF IK/arduino-serial-lib.h
+	<stdint.h>
+
+1479315684 source:/home/hank/Desktop/6 DOF IK/6 DOF IK/inverse-kinematics.c
+	<stdio.h>
+	<string.h>
+	<stdlib.h>
+	<unistd.h>
+	<fcntl.h>
+	<errno.h>
+	<termios.h>
+	<string.h>
+	<sys/ioctl.h>
+	<inttypes.h>
+	<unistd.h>
+	<math.h>
+	"inverse-kinematics.h"
+	"arduino-serial-lib.h"
+
+1479249504 /home/hank/Desktop/6 DOF IK/6 DOF IK/inverse-kinematics.h
+
+1479316716 source:/home/hank/Desktop/6 DOF IK/6 DOF IK/main.c
+	<string.h>
+	<time.h>
+	<stdio.h>
+	<math.h>
+	<stdlib.h>
+	<unistd.h>
+	"arduino-serial-lib.h"
+	"inverse-kinematics.h"
+

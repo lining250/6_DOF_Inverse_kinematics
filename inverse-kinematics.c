@@ -22,13 +22,13 @@
 #define radtodeg 57.29577951
 int ticks[7];
 long double inangles[5]      =  {0,pi/4.0,pi/2.0,(3.0/4.0)*pi,pi};
-long double servovals[7][5] =  {{135,245,355,465,577}, //0
-                                {150,265,370,475,590}, //1
-                                {167,285,385,490,650}, //2
-                                {115,225,335,450,565}, //3
-                                {100,215,320,435,555}, //4
-                                {115,235,345,460,565}, //5
-                                {160,270,370,470,580}};//6
+long double servovals[7][5] =   {{135,245,355,465,577}, //0
+                                 {150,265,370,475,590}, //1
+                                 {167,285,385,490,650}, //2
+                                 {115,215,320,445,565}, //3
+                                 {100,215,320,425,550}, //4
+                                 {115,235,345,460,565}, //5
+                                 {160,270,370,470,580}};//6
 
 
 struct Pos{
@@ -138,6 +138,9 @@ void inverseKinematics(long double x,long double y,long double z,long double t[3
     angles[5] = atan2l(-sqrt(R13*R13+R23*R23),R33);
     angles[6] = atan2l(-R32,R31);
 
+
+
+
     if (angles[4] > pi/2){
     angles[4] = angles[4] - pi;
     angles[5] = -angles[5];
@@ -146,16 +149,15 @@ void inverseKinematics(long double x,long double y,long double z,long double t[3
     if (angles[4] < -pi/2){
     angles[4] = angles[4] + pi;
     angles[5] = -angles[5];
-    angles[6] = angles[6] -pi;
+    angles[6] = pi + angles[6];
     }
-
     /* adjust angles for the servos (some servos are in different orientations than DH frames) */
     angles[1] = angles[1];
     angles[2] = angles[2];
     angles[3] = -(angles[3] - pi/2);
     angles[4] = (angles[4] + pi/2);
     angles[5] = (pi/2) - angles[5];
-    angles[6] = (pi/2) + angles[6];
+    angles[6] = fmod( ((pi/2) + angles[6] ), 2.0*pi) ;
 
 }
 

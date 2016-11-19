@@ -6,13 +6,14 @@
 #include <unistd.h>
 #include "arduino-serial-lib.h"
 #include "inverse-kinematics.h"
-#define pi  3.14159265358979323846264338327950288419716939937510L
+#define pi  3.14159265358979323846264338327950288419716939937510
 #define degtorad 0.0174532925
 #define radtodeg 57.29577951
-#define precission 4   /* amount of steps per centimeter */
+#define precision 4   /* amount of steps per centimeter */
 #define mindelay 30.0    /* determines the max velocity of the end effector */
 #define increase 4.0      /* I choose to lowest speed to be a factor of 4 smaller than the max speed */
 #define ramp 1.0          /* distance over which to increase/decrease speed */
+double  dr = 1.0/precision;
 int i;
 double angles[7];
 int ticks[7];
@@ -24,11 +25,27 @@ long double t[3][3]= {{0,1,0},    //the target rotation matrix R
 long double w[3][3]= {{0,1,0},    //the target rotation matrix R
                       {1,0,0},
                       {0,0,-1}};
-/*TODO: XYZ euler matrix with gripper always parallel to ground (roll=0)*/
-/*give (non normalized ) aproach and sliding vector, make rotation matrix */
-/*improve smoothness motion*/
-/*implement acceleration and decelleration*/
-/*jacobian?*/
+/*to do: jacobian*/
+
+/* roll pitch yaw matrix with the columns permutated z->y, y->x x->z */
+/* so that by default the gripper is in the y_0 direction and the  slider is in the x_0 direction */
+void eulerMatrix(long double alpha, long double beta, long double gamma, long double m[3][3]){
+
+    long double ca,cb,cg,sa,sb,sg;
+    ca = cosl(alpha); cb = cosl(beta); cg = cosl(gamma);
+    sa = sinl(alpha); sb = sinl(beta); sg = sinl(gamma);
+    m[0][0] = sb;
+    m[1][0] = -cb*sg;
+    m[2][0] = cb*cg;
+
+    m[0][1] = ca*cb;
+    m[1][1] = cg*sa+ca*sb*sg;
+    m[2][1] = -ca*cg*sb+sa*sg;
+
+    m[0][2] = -cb*sa;
+    m[1][2] = ca*cg-sa*sb*sg;
+    m[2][2] = sa*sb+ca*sg;
+}
 
 struct Pos{
     long double x; long double y; long double z;
@@ -45,20 +62,16 @@ void nsleep(long ms)
     nanosleep(&wait, NULL);
 }
 
-
 void line(struct Pos start, struct Pos stop){
     double j;
-    double dx,dy,dz,r,dr,x,y,z;
+    double dx,dy,dz,r,x,y,z;
     double delay,current_r;
     int steps;
     dx = stop.x - start.x;
     dy = stop.y - start.y;
     dz = stop.z - start.z;
-
     r = sqrt(dx*dx+dy*dy+dz*dz); /* total path length */
-    steps = r*precission;
-    dr = r/steps;
-
+    steps = r*precision;
     /* v=a*r²+b for r<=ramp, v=-c*r²+d for r>= ramp*/
     double a = (1.0/(ramp*ramp) )*( (dr/mindelay)-(dr/(increase*mindelay)) );
     double b = dr/(increase*mindelay);
@@ -73,7 +86,7 @@ void line(struct Pos start, struct Pos stop){
         inverseKinematics(x,y,z,t,angles);
         commandArduino(fd,angles);
 
-    /* mess due to speed regulation */
+    /* mess due to accelleration */
     /* v = dr/delay so delay = dr/v */
     if(r<=2*ramp){ /* path too short, v = constant */
         nsleep(mindelay);
@@ -93,73 +106,117 @@ void line(struct Pos start, struct Pos stop){
     }
     /* end of mess */
     }
-
 }
 
 
 int main()
 {
+    int i1;
+    double j;
+    double dummy = 70;
+
+
     struct Pos start;
     struct Pos stop;
-    start.x = -10; start.y = 30; start.z = 25;
-    stop.x  = 10; stop.y  = 30; stop.z  = 25;
-
     struct Pos bottom1;
     struct Pos bottom2;
+    struct Pos mid;
+    struct Pos midlow;
+    struct Pos midfront;
+    struct Pos midhigh;
+    struct Pos stopmid;
+    start.x = -10; start.y = 30; start.z = 25;
+    stop.x  = 10; stop.y  = 30; stop.z  = 25;
     bottom1.x = -10; bottom1.y = 30; bottom1.z = 5;
     bottom2.x = 10; bottom2.y = 30; bottom2.z = 5;
+    mid.x = 0; mid.y=25; mid.z=20;
+    midlow.x=0; midlow.y=20; midlow.z=10;
+    midfront.x=0; midfront.y=35; midfront.z=10;
+    midhigh.x=0; midhigh.y=20; midhigh.z=30;
+    stopmid.x=10; stopmid.y=30; stopmid.z=15;
+
 
     fd = serialport_init("/dev/ttyUSB0", 115200);
     sleep(2);
-    inverseKinematics(-10,30,5,t,angles);
-    commandArduino(fd, angles);
-    sleep(1);
+    inverseKinematics(0,20,10,t,angles);
+    commandArduino(fd,angles);
+    sleep(15);
 
+    line(midlow,mid);
+    line(mid,bottom1);
     line(bottom1,start);
     line(start,stop);
     line(stop,start);
     line(start,stop);
-    line(stop,start);
-    line(start,bottom1);
+    line(stop,bottom2);
+    line(bottom2,mid);
 
-//    line(bottom1,start,fd);
-//    line(start,stop,fd);
-//    line(stop,bottom2,fd);
-//    line(bottom2,stop,fd);
-//    line(stop,start,fd);
-//    line(start,bottom1,fd);
+    for (j=0; j<=dummy; j++){
+        eulerMatrix(0,0,(j/dummy)*pi/4,t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(20);
+    }
+
+    for (j=-dummy; j<=dummy; j++){
+        eulerMatrix(0,0,-(j/dummy)*pi/4,t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(20);
+    }
+
+    for (j=dummy; j>=0; j--){
+        eulerMatrix(0,0,-(j/dummy)*pi/4,t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(20);
+    }
+
+    for (j=0; j>=-dummy; j--){
+        eulerMatrix((j/dummy)*pi/4,0,0,t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(20);
+    }
+
+    for (j=-dummy; j<=dummy; j++){
+        eulerMatrix((j/dummy)*pi/4,0,0,t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(20);
+    }
+
+
+
+    for (j=0; j<=dummy; j++){
+        eulerMatrix(cos((j/dummy)*pi)*pi/4,0,sin((j/dummy)*pi)*pi/4,   t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(50);
+    }
+    for (j=0; j<=dummy; j++){
+        eulerMatrix(-cos((j/dummy)*pi)*pi/4,0,-sin((j/dummy)*pi)*pi/4,   t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(50);
+    }
+    nsleep(500);
+    for (j=dummy; j>=0; j--){
+        eulerMatrix((j/dummy)*pi/4,0,0,t);
+        inverseKinematics(0,25,20,t,angles);
+        commandArduino(fd,angles);
+        nsleep(20);
+    }
+
+
+
+    line(mid,midlow);
+    line(midlow,midfront);
+    line(midfront,midlow);
+    line(midlow,midhigh);
+    line(midhigh,midlow);
+
 
     sleep(2);
     serialport_close(fd);
-
-//    int delay = 80;
-//    fd = serialport_init("/dev/ttyUSB0", 9600);
-//
-//    sleep(2);
-//    inverseKinematics(10,30,10,r,angles); /* dumps the results in angles */
-//    commandArduino(fd, angles);
-//    nsleep(1000);
-//    for(i=20;i<=40;i++){
-//        inverseKinematics(10,30,i/2,r,angles); /* dumps the results in angles */
-//        commandArduino(fd, angles);
-//        nsleep(delay);
-//    }
-//    for(i=20;i>=-20;i--){
-//        inverseKinematics(i/2,30,20,r,angles); /* dumps the results in angles */
-//        commandArduino(fd, angles);
-//        nsleep(delay);
-//    }
-//    for(i=40;i>=20;i--){
-//        inverseKinematics(-10,30,i/2,r,angles); /* dumps the results in angles */
-//        commandArduino(fd, angles);
-//        nsleep(delay);
-//    }
-//    for(i=-20;i<=20;i++){
-//        inverseKinematics(i/2,30,10,r,angles); /* dumps the results in angles */
-//        commandArduino(fd, angles);
-//        nsleep(delay);
-//    }
-//
-//    sleep(2);
-//    serialport_close(fd);
 }

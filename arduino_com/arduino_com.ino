@@ -31,7 +31,7 @@ void loop(){
   if(counter == 7){
     counter = 0;
     for(i=0; i<7; i++){
-      Serial.println(data[i]);
+      //Serial.println(data[i]);
       pwm.setPWM(i, 0, data[i]);
     }
   }

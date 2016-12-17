@@ -30,7 +30,11 @@
 
 1479249504 /home/hank/Desktop/6 DOF IK/6 DOF IK/inverse-kinematics.h
 
+<<<<<<< HEAD
 1481969174 source:/home/hank/Desktop/6 DOF IK/6 DOF IK/main.c
+=======
+1479672618 source:/home/hank/Desktop/6 DOF IK/6 DOF IK/main.c
+>>>>>>> 9290c4fe667ea7a5426bb01c9f61cf472c77b579
 	<string.h>
 	<time.h>
 	<stdio.h>

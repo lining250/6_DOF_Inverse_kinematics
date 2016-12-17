@@ -139,7 +139,7 @@ int main()
 
     inverseKinematics(0,20,10,t,angles);
     commandArduino(fd,angles);
-    sleep(10);
+    sleep(1);
 
     line(midlow,mid);
     line(mid,bottom1);

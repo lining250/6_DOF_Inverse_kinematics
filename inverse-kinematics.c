@@ -110,7 +110,7 @@ void inverseKinematics(double x,double y,double z,double t[3][3],double angles[7
     q1=angles[1]; q2=angles[2]; q3=angles[3];
     r11=t[0][0];r12=t[0][1];r13=t[0][2]; r21=t[1][0];r22=t[1][1];r23=t[1][2]; r31=t[2][0];r32=t[2][1];r33=t[2][2];
 
-    /* solve inverse kinematics for the final 3 angles */
+    /* solve inverse kinematics for the final 3 angles (2.12.5 from the book) */
     ax = r13*cosl(q1)*cosl(q2 + q3) + r23*cosl(q2 + q3)*sinl(q1) + r33*sinl(q2 + q3);
     ay = -r23*cosl(q1) + r13*sinl(q1);
     az = -r33*cosl(q2 + q3) + r13*cosl(q1)*sinl(q2 + q3) + r23*sinl(q1)*sinl(q2 + q3);

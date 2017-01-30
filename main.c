@@ -13,7 +13,7 @@
 #define precision 4   /* amount of steps per centimeter */
 #define mindelay 30.0    /* determines the max velocity of the end effector */
 #define increase 4.0      /* I choose to lowest speed to be a factor of 4 smaller than the max speed */
-#define ramp 1.0          /* distance over which to increase/decrease speed */
+#define ramp 1.0          /* distance over which to increase/decrease speed in centimeters */
 double  dr = 1.0/precision; /* step size for the line function*/
 int i;
 double angles[7];
@@ -62,7 +62,7 @@ void msleep(long ms)  /* delay function in miliseconds*/
     wait.tv_nsec = (us % (1000 * 1000)) * 1000;
     nanosleep(&wait, NULL);
 }
-
+/* make the toolpoint follow a line with acceleration and deceleration There probably exists a more elegant way, but this works. */
 void line(struct Pos start, struct Pos stop){
     double j;
     double dx,dy,dz,r,x,y,z;
@@ -73,7 +73,8 @@ void line(struct Pos start, struct Pos stop){
     dz = stop.z - start.z;
     r = sqrt(dx*dx+dy*dy+dz*dz); /* total path length */
     steps = r*precision;
-    /* v=a*r²+b for current_r<=ramp, v=-c*r²+d for current_r>= r - ramp*/
+    /* the velocity ramps up and down according to: */
+    /* v=a*r²+b for current_r<=ramp, v=-c*r²+d for current_r>= r - ramp. a,b,c and d then turn out to be:*/
     double a = (1.0/(ramp*ramp) )*( (dr/mindelay)-(dr/(increase*mindelay)) );
     double b = dr/(increase*mindelay);
     double c = ( (dr/mindelay) - (dr/(increase*mindelay)) ) / (2*r*ramp - ramp*ramp);
@@ -89,8 +90,8 @@ void line(struct Pos start, struct Pos stop){
         commandArduino(fd,angles);
 
     /* mess due to accelleration */
-    if(r<=2*ramp){ /* path too short, v = constant */
-        msleep(mindelay);
+    if(r<=2*ramp){ /* path too short, v = constant (half it's max speed) */
+        msleep(mindelay*2);
     }
     else if(r>2*ramp){  /* v = a*current_r² + b*/
         if (current_r <= ramp){
@@ -133,18 +134,17 @@ int main()
     midfront.x=0; midfront.y=35; midfront.z=10;
     midhigh.x=0; midhigh.y=20; midhigh.z=30;
     stopmid.x=10; stopmid.y=30; stopmid.z=15;
-
+    
+  
+    
     fd = serialport_init("/dev/ttyUSB1", 115200); /* open the serial port */
     sleep(2);
 
     inverseKinematics(0,20,10,t,angles);
     commandArduino(fd,angles);
     sleep(1);
-<<<<<<< HEAD
 
-=======
->>>>>>> 9290c4fe667ea7a5426bb01c9f61cf472c77b579
-
+    /* what follows is just a verry basic way to program a toolpath */
     line(midlow,mid);
     line(mid,bottom1);
     line(bottom1,start);
@@ -153,69 +153,69 @@ int main()
     line(start,stop);
     line(stop,bottom2);
     line(bottom2,mid);
-//
-////     no function yet to go from 1 orientation to another
-//    for (j=0; j<=dummy; j++){
-//        eulerMatrix(0,0,(j/dummy)*pi/4,t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(20);
-//    }
-//
-//    for (j=-dummy; j<=dummy; j++){
-//        eulerMatrix(0,0,-(j/dummy)*pi/4,t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(20);
-//    }
-//
-//    for (j=dummy; j>=0; j--){
-//        eulerMatrix(0,0,-(j/dummy)*pi/4,t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(20);
-//    }
-//
-//    for (j=0; j>=-dummy; j--){
-//        eulerMatrix((j/dummy)*pi/4,0,0,t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(20);
-//    }
-//
-//    for (j=-dummy; j<=dummy; j++){
-//        eulerMatrix((j/dummy)*pi/4,0,0,t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(20);
-//    }
-//
-//    for (j=0; j<=dummy; j++){
-//        eulerMatrix(cos((j/dummy)*pi)*pi/4,0,sin((j/dummy)*pi)*pi/4,   t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(50);
-//    }
-//
-//    for (j=0; j<=dummy; j++){
-//        eulerMatrix(-cos((j/dummy)*pi)*pi/4,0,-sin((j/dummy)*pi)*pi/4,   t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(50);
-//    }
-//    msleep(500);
-//    for (j=dummy; j>=0; j--){
-//        eulerMatrix((j/dummy)*pi/4,0,0,t);
-//        inverseKinematics(0,25,20,t,angles);
-//        commandArduino(fd,angles);
-//        msleep(20);
-//    }
-//
-//    line(mid,midlow);
-//    line(midlow,midfront);
-//    line(midfront,midlow);
-//    line(midlow,midhigh);
-//    line(midhigh,midlow);
+
+   //no function yet to go from 1 orientation to another
+   for (j=0; j<=dummy; j++){
+       eulerMatrix(0,0,(j/dummy)*pi/4,t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(20);
+   }
+
+   for (j=-dummy; j<=dummy; j++){
+       eulerMatrix(0,0,-(j/dummy)*pi/4,t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(20);
+   }
+
+   for (j=dummy; j>=0; j--){
+       eulerMatrix(0,0,-(j/dummy)*pi/4,t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(20);
+   }
+
+   for (j=0; j>=-dummy; j--){
+       eulerMatrix((j/dummy)*pi/4,0,0,t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(20);
+   }
+
+   for (j=-dummy; j<=dummy; j++){
+       eulerMatrix((j/dummy)*pi/4,0,0,t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(20);
+   }
+
+   for (j=0; j<=dummy; j++){
+       eulerMatrix(cos((j/dummy)*pi)*pi/4,0,sin((j/dummy)*pi)*pi/4,   t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(50);
+   }
+
+   for (j=0; j<=dummy; j++){
+       eulerMatrix(-cos((j/dummy)*pi)*pi/4,0,-sin((j/dummy)*pi)*pi/4,   t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(50);
+   }
+   msleep(500);
+   for (j=dummy; j>=0; j--){
+       eulerMatrix((j/dummy)*pi/4,0,0,t);
+       inverseKinematics(0,25,20,t,angles);
+       commandArduino(fd,angles);
+       msleep(20);
+   }
+
+   line(mid,midlow);
+   line(midlow,midfront);
+   line(midfront,midlow);
+   line(midlow,midhigh);
+   line(midhigh,midlow);
 
     sleep(2);
     serialport_close(fd);
